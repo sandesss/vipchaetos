@@ -22,7 +22,7 @@ if not firebase_admin._apps:
 
 @app.route('/')
 def index():
-    return render_template('vip.html')
+    return render_template('index.html')
 
 @app.route('/api/heartbeat', methods=['POST'])
 def heartbeat():
