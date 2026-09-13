@@ -7,15 +7,16 @@ from firebase_admin import credentials, db
 
 app = Flask(__name__)
 
-# Firebase Initialization strict environment variable check
 if not firebase_admin._apps:
     firebase_config_str = os.environ.get('FIREBASE_CONFIG_JSON')
     if not firebase_config_str:
         raise ValueError("CRITICAL: FIREBASE_CONFIG_JSON environment variable is missing!")
     
+    # Alisin ang mga extra quotes o whitespace kung sakaling nadikit sa Render
+    firebase_config_str = firebase_config_str.strip()
     cred_dict = json.loads(firebase_config_str)
-    cred = credentials.Certificate(cred_dict)
     
+    cred = credentials.Certificate(cred_dict)
     firebase_admin.initialize_app(cred, {
         'databaseURL': 'https://vipchaetos-default-rtdb.firebaseio.com/'
     })
