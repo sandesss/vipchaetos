@@ -1,0 +1,4 @@
+build/ 
+dist/ 
+firebase_credentials.json 
+*.spec 

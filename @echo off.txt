@@ -1,0 +1,37 @@
+@echo off
+echo ================================
+echo   Auto Clean - VIP Lock Screen
+echo ================================
+echo.
+
+echo [1] Tinatapos ang mga posibleng proseso...
+taskkill /F /IM vip.exe /T 2>nul
+taskkill /F /IM lock.exe /T 2>nul
+
+echo [2] Naghahanap sa Run registry keys...
+for /f "tokens=1,2*" %%a in ('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" 2^>nul ^| findstr /i "vip lock"') do (
+    echo   Nakita: %%a - tinatanggal...
+    reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "%%a" /f 2>nul
+)
+for /f "tokens=1,2*" %%a in ('reg query "HKLM\Software\Microsoft\Windows\CurrentVersion\Run" 2^>nul ^| findstr /i "vip lock"') do (
+    echo   Nakita: %%a - tinatanggal...
+    reg delete "HKLM\Software\Microsoft\Windows\CurrentVersion\Run" /v "%%a" /f 2>nul
+)
+
+echo [3] Naghahanap sa Startup folders...
+del /f /q "%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\*vip*" 2>nul
+del /f /q "%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\*lock*" 2>nul
+del /f /q "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\*vip*" 2>nul
+del /f /q "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\*lock*" 2>nul
+
+echo [4] Naghahanap sa scheduled tasks...
+for /f "tokens=1" %%t in ('schtasks /query /fo csv /nh 2^>nul ^| findstr /i "vip lock"') do (
+    echo   Nakita: %%t
+)
+
+echo.
+echo ================================
+echo Tapos na. I-restart mo ngayon nang NORMAL
+echo (hindi Safe Mode) at tingnan kung gumana.
+echo ================================
+pause

