@@ -1,4 +1,5 @@
 import os
+import json
 from flask import Flask, render_template, request, jsonify
 import subprocess
 import firebase_admin
@@ -6,16 +7,17 @@ from firebase_admin import credentials, db
 
 app = Flask(__name__)
 
-# Firebase Initialization with proper path handling for Render Secret Files
+# Firebase Initialization using Environment Variable
 if not firebase_admin._apps:
-    # Render places Secret Files in the root directory, but let's check absolute or relative paths
-    cred_path = "firebase_credentials.json"
-    if not os.path.exists(cred_path):
-        cred_path = os.path.join(os.path.dirname(__file__), "firebase_credentials.json")
-
-    cred = credentials.Certificate(cred_path)
+    firebase_config_str = os.environ.get('FIREBASE_CONFIG_JSON')
+    if firebase_config_str:
+        cred_dict = json.loads(firebase_config_str)
+        cred = credentials.Certificate(cred_dict)
+    else:
+        cred = credentials.Certificate("firebase_credentials.json")
+        
     firebase_admin.initialize_app(cred, {
-        'databaseURL': 'https://vipchaetos-default-rtdb.firebaseio.com/'  # Siguraduhing ito ang totoong URL mo galing sa Firebase console
+        'databaseURL': 'https://vipchaetos-default-rtdb.firebaseio.com/'
     })
 
 @app.route('/')
