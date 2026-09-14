@@ -53,8 +53,9 @@ def target_action():
         if not hwid or not action:
             return jsonify({"status": "error", "message": "Invalid HWID or action."}), 400
 
-        ref = db.reference(f'clients/{hwid}/pending_action')
-        ref.set(action)
+        # Ligtas na pag-save sa Firebase node
+        ref = db.reference(f'clients/{hwid}')
+        ref.update({'pending_action': action})
 
         return jsonify({"status": "success", "message": f"Action '{action}' successfully queued for {hwid}!"})
     except Exception as e:
