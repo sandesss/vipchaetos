@@ -1,10 +1,10 @@
 import os
 import json
-from flask import Flask, jsonify, request, render_template, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-app = Flask(__name__, template_folder='.', static_folder='.')
+app = Flask(__name__, static_folder='.', static_url_path='')
 
 # Ligtas na pag-initialize ng Firebase mula sa Environment Variable
 db = None
@@ -21,11 +21,11 @@ except Exception as e:
 
 @app.route('/')
 def index():
-    # Sinusubukan nitong i-serve ang index.html panel mo
-    try:
-        return render_template('index.html')
-    except Exception:
-        return send_from_directory('.', 'index.html')
+    # Susubukan nitong hanapin ang index.html o home.html sa folder
+    for filename in ['index.html', 'home.html', 'panel.html']:
+        if os.path.exists(filename):
+            return send_from_directory('.', filename)
+    return "Panel file (index.html) not found in the root directory!", 404
 
 @app.route('/api/clients', methods=['GET'])
 def get_clients():
