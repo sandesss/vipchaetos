@@ -1,10 +1,10 @@
 import os
 import json
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template, send_from_directory
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='.', static_folder='.')
 
 # Ligtas na pag-initialize ng Firebase mula sa Environment Variable
 db = None
@@ -21,7 +21,11 @@ except Exception as e:
 
 @app.route('/')
 def index():
-    return "Server is running smoothly!", 200
+    # Sinusubukan nitong i-serve ang index.html panel mo
+    try:
+        return render_template('index.html')
+    except Exception:
+        return send_from_directory('.', 'index.html')
 
 @app.route('/api/clients', methods=['GET'])
 def get_clients():
@@ -40,7 +44,6 @@ def get_clients():
 def heartbeat():
     try:
         data = request.get_json(silent=True) or {}
-        # Ilagay ang logic para sa heartbeat dito
         return jsonify({"status": "success", "message": "Heartbeat received"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -49,7 +52,6 @@ def heartbeat():
 def target_action():
     try:
         data = request.get_json(silent=True) or {}
-        # Ilagay ang logic para sa target action dito
         return jsonify({"status": "success", "message": "Action processed"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
