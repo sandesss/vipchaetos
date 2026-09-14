@@ -75,7 +75,6 @@
 
         .status-badge { font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; }
         .status-online { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
-        .status-offline { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
         .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
 
         .telemetry-box { background: var(--bg-base); border-radius: 8px; padding: 12px; margin-bottom: 20px; font-family: 'JetBrains Mono', monospace; font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
@@ -85,7 +84,6 @@
         .action-group { margin-bottom: 14px; }
         .group-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .btn-grid.single { grid-template-columns: 1fr; }
 
         .cmd-btn {
             background: var(--bg-base);
@@ -150,7 +148,6 @@
         </header>
 
         <div class="targets-grid" id="targets-container">
-            <!-- Target Card Sample -->
             <div class="target-card" data-identifier="client_alpha a98f-3321-b789 192.168.1.105">
                 <div class="card-header">
                     <div class="target-identity">
@@ -220,12 +217,21 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ hwid: hwid, action: action })
             })
-            .then(res => res.json())
-            .then(data => {
-                consoleBox.innerText = `> Response: ${data.message}`;
+            .then(async response => {
+                const text = await response.text();
+                try {
+                    const data = JSON.parse(text);
+                    if (response.ok) {
+                        consoleBox.innerText = `> Response: ${data.message || 'Success'}`;
+                    } else {
+                        consoleBox.innerText = `> Error ${response.status}: ${data.message || text}`;
+                    }
+                } catch (e) {
+                    consoleBox.innerText = `> Response: ${response.status} ${text}`;
+                }
             })
             .catch(err => {
-                consoleBox.innerText = `> Error: Transmission timeout.`;
+                consoleBox.innerText = `> Error: 404 Not Found or Network Error`;
             });
         }
     </script>
