@@ -54,4 +54,4 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
 ```[cite: 3]
 
-Pagkatapos mong i-save ito nang maayos sa iyong project, i-trigger ulit ang **Manual Deploy** sa Render at magiging **Build Successful** na ito nang walang error!
+Kapag nailagay mo na 'yan nang malinis (purong Python code lang), i-deploy mo ulit sa Render at siguradong magiging **Build Successful** na 'yan!
