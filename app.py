@@ -1,4 +1,3 @@
-
 import time
 from flask import Flask, request, jsonify, render_template
 
@@ -21,15 +20,21 @@ def heartbeat():
     username = data.get("username", "Client_Alpha")
 
     if hwid:
+        # Kunin ang pending action na galing sa panel bago ito i-reset
+        current_action = clients.get(hwid, {}).get("pending_action", "")
+
         clients[hwid] = {
             "hwid": hwid,
             "ip": ip,
             "username": username,
             "last_seen": time.time(),
-            "pending_action": clients.get(hwid, {}).get("pending_action", "")
+            "pending_action": ""  # I-clear na agad para isang beses lang ma-trigger
         }
+        
+        # Ibalik ang action sa client script sa pamamagitan ng JSON response
+        return jsonify({"action": current_action}), 200
 
-    return "", 200
+    return jsonify({"action": ""}), 200
 
 
 @app.route("/api/clients", methods=["GET"])
@@ -57,8 +62,9 @@ def target_action():
 
     if hwid in clients:
         clients[hwid]["pending_action"] = action
+        return jsonify({"message": f"Command {action} queued successfully."}), 200
 
-    return "", 200
+    return jsonify({"message": "Client offline or not found."}), 404
 
 
 @app.route("/api/clear-target", methods=["POST"])
@@ -75,4 +81,6 @@ def clear_target():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+```[cite: 2]
 
+Kapag na-deploy mo na ito sa Render, ang client script mo sa PC ay kailangan na lang din magbasa ng response mula sa heartbeat gamit ang `response.json().get('action')` para kusang mag-unlock kapag pinindot mo ang button sa web panel!
