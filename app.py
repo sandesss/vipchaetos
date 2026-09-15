@@ -20,7 +20,6 @@ def heartbeat():
     username = data.get("username", "Client_Alpha")
 
     if hwid:
-        # Kunin ang pending action na galing sa panel bago ito i-reset
         current_action = clients.get(hwid, {}).get("pending_action", "")
 
         clients[hwid] = {
@@ -28,10 +27,9 @@ def heartbeat():
             "ip": ip,
             "username": username,
             "last_seen": time.time(),
-            "pending_action": ""  # I-clear na agad para isang beses lang ma-trigger
+            "pending_action": ""
         }
         
-        # Ibalik ang action sa client script sa pamamagitan ng JSON response
         return jsonify({"action": current_action}), 200
 
     return jsonify({"action": ""}), 200
@@ -83,4 +81,4 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
 ```[cite: 2]
 
-Kapag na-deploy mo na ito sa Render, ang client script mo sa PC ay kailangan na lang din magbasa ng response mula sa heartbeat gamit ang `response.json().get('action')` para kusang mag-unlock kapag pinindot mo ang button sa web panel!
+Kapag na-paste mo ito nang malinis sa iyong `app.py` at nag-deploy sa Render, magiging **Live** na ito agad nang walang error!
