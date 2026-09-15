@@ -1,3 +1,4 @@
+```python
 import time
 from flask import Flask, request, jsonify, render_template
 
@@ -31,7 +32,7 @@ def heartbeat():
     return "", 200
 
 
-@app.route("/api/clients")
+@app.route("/api/clients", methods=["GET"])
 def get_clients():
     now = time.time()
 
@@ -74,3 +75,4 @@ def clear_target():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+```
