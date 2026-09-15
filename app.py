@@ -29,7 +29,7 @@ def heartbeat():
             "last_seen": time.time(),
             "pending_action": ""
         }
-        
+
         return jsonify({"action": current_action}), 200
 
     return jsonify({"action": ""}), 200
@@ -60,9 +60,13 @@ def target_action():
 
     if hwid in clients:
         clients[hwid]["pending_action"] = action
-        return jsonify({"message": f"Command {action} queued successfully."}), 200
+        return jsonify({
+            "message": f"Command {action} queued successfully."
+        }), 200
 
-    return jsonify({"message": "Client offline or not found."}), 404
+    return jsonify({
+        "message": "Client offline or not found."
+    }), 404
 
 
 @app.route("/api/clear-target", methods=["POST"])
@@ -78,7 +82,7 @@ def clear_target():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
-```[cite: 2]
-
-Kapag na-paste mo ito nang malinis sa iyong `app.py` at nag-deploy sa Render, magiging **Live** na ito agad nang walang error!
+    app.run(
+        host="0.0.0.0",
+        port=5000
+    )
