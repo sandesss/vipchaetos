@@ -1,9 +1,12 @@
 import time
+import random
+import string
 from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
 
 clients = {}
+generated_keys = set()
 
 
 @app.route("/")
@@ -79,6 +82,24 @@ def clear_target():
         del clients[hwid]
 
     return "", 200
+
+
+@app.route("/api/generate-key", methods=["POST"])
+def generate_key():
+    key = ''.join(random.choices(string.ascii_uppercase + string.digits, k=12))
+    formatted_key = f"VIP-{key[:4]}-{key[4:8]}-{key[8:]}"
+    generated_keys.add(formatted_key)
+    return jsonify({"key": formatted_key})
+
+
+@app.route("/api/verify-key", methods=["POST"])
+def verify_key():
+    data = request.get_json(silent=True) or {}
+    key = data.get("key")
+    if key in generated_keys:
+        generated_keys.remove(key)  # Burahin pagkatapos magamit para isang beses lang
+        return jsonify({"success": True}), 200
+    return jsonify({"success": False, "message": "Invalid or expired key"}), 400
 
 
 if __name__ == "__main__":
