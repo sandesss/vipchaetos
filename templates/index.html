@@ -51,7 +51,7 @@
         }
         .search-box input:focus { border-color: var(--primary); }
 
-        .global-metrics { display: flex; gap: 20px; }
+        .global-metrics { display: flex; gap: 20px; align-items: center; }
         .metric-box { background: var(--bg-base); border: 1px solid var(--border-color); padding: 10px 20px; border-radius: 8px; text-align: right; }
         .metric-box .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
         .metric-box .value { font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--primary); }
@@ -143,6 +143,12 @@
                 <input type="text" id="search-input" placeholder="Filter by Username, HWID or IP address..." onkeyup="filterTargets()">
             </div>
 
+            <!-- Dito idinagdag ang Generate Key button at display area -->
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button class="cmd-btn btn-accent" onclick="generateKey()">🔑 Generate Key</button>
+                <span id="generated-key-display" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--primary);"></span>
+            </div>
+
             <div class="global-metrics">
                 <div class="metric-box">
                     <div class="label">Total Nodes</div>
@@ -157,6 +163,18 @@
     </div>
 
     <script>
+        function generateKey() {
+            fetch('/api/generate-key', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    const display = document.getElementById('generated-key-display');
+                    display.innerText = `Key: ${data.key}`;
+                    navigator.clipboard.writeText(data.key);
+                    alert('Key generated and copied to clipboard: ' + data.key);
+                })
+                .catch(err => console.error('Error generating key:', err));
+        }
+
         function fetchClients() {
             fetch('/api/clients')
                 .then(res => res.json())
